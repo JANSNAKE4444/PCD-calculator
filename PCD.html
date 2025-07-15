@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Circle Point Calculator - Equispaced Coordinates</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 25px;
+            border: 4px solid transparent;
+            background-clip: padding-box;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.15), 
+                        inset 0 0 0 2px rgba(255,255,255,0.1),
+                        0 0 0 4px rgba(52, 152, 219, 0.3);
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .container::before {
+            content: '';
+            position: absolute;
+            top: -4px;
+            left: -4px;
+            right: -4px;
+            bottom: -4px;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #ffeaa7, #dda0dd, #98d8c8);
+            background-size: 400% 400%;
+            border-radius: 29px;
+            z-index: -1;
+            animation: gradientBorder 4s ease infinite;
+        }
+        
+        @keyframes gradientBorder {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 30px;
+            display: grid;
+            grid-template-columns: 350px 1fr 400px;
+            gap: 30px;
+        }
+        
+        .input-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            border-left: 5px solid #e74c3c;
+        }
+        
+        .input-section h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.4em;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        .input-label {
+            display: block;
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        
+        .input-field {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        .input-field:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-bottom: 15px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(231, 76, 60, 0.3);
+        }
+        
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #f5c6cb;
+            font-size: 14px;
+            margin-top: 10px;
+            display: none;
+        }
+        
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #c3e6cb;
+            font-size: 14px;
+            margin-top: 10px;
+            display: none;
+        }
+        
+        .visualization-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            border-left: 5px solid #27ae60;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .visualization-section h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.4em;
+        }
+        
+        #circleCanvas {
+            border: 2px solid #dee2e6;
+            border-radius: 10px;
+            background: white;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .coordinates-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            border-left: 5px solid #f39c12;
+        }
+        
+        .coordinates-section h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.4em;
+        }
+        
+        .coordinates-table {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #dee2e6;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .coordinates-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .coordinates-table th {
+            background: #3498db;
+            color: white;
+            padding: 12px;
+            text-align: center;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+        
+        .coordinates-table td {
+            padding: 10px;
+            text-align: center;
+            border-bottom: 1px solid #dee2e6;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .coordinates-table tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        
+        .coordinates-table tr:hover {
+            background: #e3f2fd;
+        }
+        
+        .angle-col { color: #e74c3c; font-weight: 600; }
+        .x-col { color: #27ae60; font-weight: 600; }
+        .y-col { color: #3498db; font-weight: 600; }
+        
+        .info-box {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #2196f3;
+            margin-bottom: 20px;
+        }
+        
+        .info-box h4 {
+            color: #1976d2;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        
+        .info-box p {
+            color: #495057;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+        
+        .download-btn {
+            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+            margin-top: 15px;
+        }
+        
+        .download-btn:hover {
+            box-shadow: 0 5px 15px rgba(243, 156, 18, 0.3);
+        }
+        
+        @media (max-width: 1200px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⭕ Circle Point Calculator</h1>
+            <p>Calculate equispaced coordinates around a circle with visual display</p>
+        </div>
+        
+        <div class="content">
+            <div class="input-section">
+                <h3>🎯 Input Parameters</h3>
+                
+                <div class="input-group">
+                    <label class="input-label">Start Angle (degrees):</label>
+                    <input type="number" class="input-field" id="startAngle" value="0" step="any">
+                </div>
+                
+                <div class="input-group">
+                    <label class="input-label">Angle Increment (degrees):</label>
+                    <input type="number" class="input-field" id="angleIncrement" value="45" step="any" min="0.1">
+                </div>
+                
+                <div class="input-group">
+                    <label class="input-label">Radius:</label>
+                    <input type="number" class="input-field" id="radius" value="60" step="any" min="1">
+                </div>
+                
+                <button class="btn" onclick="calculatePoints()">Calculate Points</button>
+                
+                <div class="info-box">
+                    <h4>📐 How it works:</h4>
+                    <p>• 0° = Right (positive X-axis)<br>
+                    • 90° = Up (positive Y-axis)<br>
+                    • Moves counter-clockwise<br>
+                    • Must divide evenly into 360°</p>
+                </div>
+                
+                <div id="errorMessage" class="error-message"></div>
+                <div id="successMessage" class="success-message"></div>
+                
+                <button class="btn download-btn" onclick="downloadCSV()" id="downloadBtn" style="display: none;">
+                    💾 Download CSV
+                </button>
+            </div>
+            
+            <div class="visualization-section">
+                <h3>📊 Visual Display</h3>
+                <canvas id="circleCanvas" width="500" height="500"></canvas>
+                <div id="canvasInfo" style="margin-top: 15px; text-align: center; color: #6c757d; font-size: 14px;">
+                    Enter parameters and click "Calculate Points" to see the visualization
+                </div>
+            </div>
+            
+            <div class="coordinates-section">
+                <h3>📋 Coordinate Table</h3>
+                <div class="coordinates-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Point</th>
+                                <th>Angle (°)</th>
+                                <th>X Coordinate</th>
+                                <th>Y Coordinate</th>
+                            </tr>
+                        </thead>
+                        <tbody id="coordinatesBody">
+                            <tr>
+                                <td colspan="4" style="text-align: center; color: #6c757d; padding: 30px;">
+                                    Calculate points to see coordinates here
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Lion Logo with JS Initials -->
+    <div style="position: fixed; bottom: 20px; right: 20px; z-index: 1000;">
+        <svg width="80" height="80" viewBox="0 0 100 100" style="filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));">
+            <!-- Lion Head Circle Background -->
+            <circle cx="50" cy="50" r="45" fill="url(#lionGradient)" stroke="#8B4513" stroke-width="2"/>
+            
+            <!-- Gradient Definition -->
+            <defs>
+                <radialGradient id="lionGradient" cx="0.3" cy="0.3">
+                    <stop offset="0%" stop-color="#FFA500"/>
+                    <stop offset="70%" stop-color="#FF8C00"/>
+                    <stop offset="100%" stop-color="#FF6347"/>
+                </radialGradient>
+                <filter id="shadow">
+                    <feDropShadow dx="2" dy="2" stdDeviation="2" flood-color="rgba(0,0,0,0.3)"/>
+                </filter>
+            </defs>
+            
+            <!-- Lion Mane -->
+            <circle cx="35" cy="35" r="8" fill="#8B4513" opacity="0.7"/>
+            <circle cx="65" cy="35" r="8" fill="#8B4513" opacity="0.7"/>
+            <circle cx="25" cy="50" r="6" fill="#8B4513" opacity="0.6"/>
+            <circle cx="75" cy="50" r="6" fill="#8B4513" opacity="0.6"/>
+            <circle cx="35" cy="65" r="7" fill="#8B4513" opacity="0.6"/>
+            <circle cx="65" cy="65" r="7" fill="#8B4513" opacity="0.6"/>
+            
+            <!-- Lion Face -->
+            <circle cx="50" cy="45" r="20" fill="#DAA520"/>
+            
+            <!-- Eyes -->
+            <circle cx="45" cy="40" r="3" fill="#000"/>
+            <circle cx="55" cy="40" r="3" fill="#000"/>
+            <circle cx="45" cy="39" r="1" fill="#FFF"/>
+            <circle cx="55" cy="39" r="1" fill="#FFF"/>
+            
+            <!-- Nose -->
+            <polygon points="50,47 47,50 53,50" fill="#8B4513"/>
+            
+            <!-- Mouth -->
+            <path d="M 50 52 Q 45 55 42 52" stroke="#8B4513" stroke-width="2" fill="none"/>
+            <path d="M 50 52 Q 55 55 58 52" stroke="#8B4513" stroke-width="2" fill="none"/>
+            
+            <!-- Whiskers -->
+            <line x1="35" y1="48" x2="25" y2="46" stroke="#8B4513" stroke-width="1"/>
+            <line x1="35" y1="52" x2="25" y2="54" stroke="#8B4513" stroke-width="1"/>
+            <line x1="65" y1="48" x2="75" y2="46" stroke="#8B4513" stroke-width="1"/>
+            <line x1="65" y1="52" x2="75" y2="54" stroke="#8B4513" stroke-width="1"/>
+            
+            <!-- JS Initials -->
+            <text x="50" y="75" font-family="Arial Black, Arial" font-size="12" font-weight="bold" text-anchor="middle" fill="#2C3E50" filter="url(#shadow)">JS</text>
+            
+            <!-- Crown/Decoration on top -->
+            <polygon points="50,15 45,25 55,25" fill="#FFD700" stroke="#FFA500" stroke-width="1"/>
+            <circle cx="50" cy="15" r="2" fill="#FF6347"/>
+        </svg>
+    </div>
+    
+    <script>
+        let calculatedPoints = [];
+        
+        function calculatePoints() {
+            // Get input values
+            const startAngle = parseFloat(document.getElementById('startAngle').value) || 0;
+            const angleIncrement = parseFloat(document.getElementById('angleIncrement').value) || 45;
+            const radius = parseFloat(document.getElementById('radius').value) || 60;
+            
+            // Clear previous messages
+            hideMessages();
+            
+            // Validation
+            if (angleIncrement <= 0) {
+                showError("Angle increment must be greater than 0");
+                return;
+            }
+            
+            if (radius <= 0) {
+                showError("Radius must be greater than 0");
+                return;
+            }
+            
+            // Check if angles divide evenly into 360
+            if (360 % angleIncrement !== 0) {
+                showError(`Angle increment ${angleIncrement}° does not divide evenly into 360°. Try values like: 1, 2, 3, 4, 5, 6, 8, 9, 10, 12, 15, 18, 20, 24, 30, 36, 40, 45, 60, 72, 90, 120, 180`);
+                return;
+            }
+            
+            // Calculate points
+            calculatedPoints = [];
+            const numPoints = 360 / angleIncrement;
+            
+            for (let i = 0; i < numPoints; i++) {
+                const angle = startAngle + (i * angleIncrement);
+                const angleRad = angle * (Math.PI / 180);
+                
+                const x = radius * Math.cos(angleRad);
+                const y = radius * Math.sin(angleRad);
+                
+                calculatedPoints.push({
+                    point: i + 1,
+                    angle: angle,
+                    x: x,
+                    y: y
+                });
+            }
+            
+            // Update display
+            updateCoordinatesTable();
+            drawCircle();
+            showSuccess(`Successfully calculated ${numPoints} points around the circle`);
+            document.getElementById('downloadBtn').style.display = 'block';
+        }
+        
+        function updateCoordinatesTable() {
+            const tbody = document.getElementById('coordinatesBody');
+            tbody.innerHTML = '';
+            
+            calculatedPoints.forEach(point => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${point.point}</td>
+                    <td class="angle-col">${point.angle.toFixed(1)}°</td>
+                    <td class="x-col">${point.x.toFixed(3)}</td>
+                    <td class="y-col">${point.y.toFixed(3)}</td>
+                `;
+            });
+        }
+        
+        function drawCircle() {
+            const canvas = document.getElementById('circleCanvas');
+            const ctx = canvas.getContext('2d');
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = parseFloat(document.getElementById('radius').value) || 60;
+            
+            // Scale factor to fit circle in canvas
+            const maxRadius = Math.min(canvas.width, canvas.height) / 2 - 40;
+            const scale = Math.min(maxRadius / radius, 1);
+            const drawRadius = radius * scale;
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw grid
+            ctx.strokeStyle = '#f0f0f0';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= canvas.width; i += 20) {
+                ctx.beginPath();
+                ctx.moveTo(i, 0);
+                ctx.lineTo(i, canvas.height);
+                ctx.stroke();
+            }
+            for (let i = 0; i <= canvas.height; i += 20) {
+                ctx.beginPath();
+                ctx.moveTo(0, i);
+                ctx.lineTo(canvas.width, i);
+                ctx.stroke();
+            }
+            
+            // Draw axes
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            // X-axis
+            ctx.beginPath();
+            ctx.moveTo(0, centerY);
+            ctx.lineTo(canvas.width, centerY);
+            ctx.stroke();
+            // Y-axis
+            ctx.beginPath();
+            ctx.moveTo(centerX, 0);
+            ctx.lineTo(centerX, canvas.height);
+            ctx.stroke();
+            
+            // Draw circle
+            ctx.strokeStyle = '#3498db';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, drawRadius, 0, 2 * Math.PI);
+            ctx.stroke();
+            
+            // Draw center point
+            ctx.fillStyle = '#2c3e50';
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 4, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // Draw points and labels
+            calculatedPoints.forEach((point, index) => {
+                const x = centerX + (point.x * scale);
+                const y = centerY - (point.y * scale); // Invert Y for canvas coordinates
+                
+                // Draw point
+                ctx.fillStyle = '#e74c3c';
+                ctx.beginPath();
+                ctx.arc(x, y, 6, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                // Draw line from center
+                ctx.strokeStyle = '#95a5a6';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.lineTo(x, y);
+                ctx.stroke();
+                
+                // Draw label
+                ctx.fillStyle = '#2c3e50';
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'center';
+                const labelX = centerX + ((point.x * scale) * 1.15);
+                const labelY = centerY - ((point.y * scale) * 1.15) + 4;
+                ctx.fillText(`P${point.point}`, labelX, labelY);
+                
+                // Draw angle arc for first few points
+                if (index < 3) {
+                    ctx.strokeStyle = '#f39c12';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(centerX, centerY, 30, 0, -point.angle * Math.PI / 180, true);
+                    ctx.stroke();
+                }
+            });
+            
+            // Update info
+            document.getElementById('canvasInfo').innerHTML = 
+                `Showing ${calculatedPoints.length} points at radius ${radius} (scaled to fit)`;
+        }
+        
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+        
+        function showSuccess(message) {
+            const successDiv = document.getElementById('successMessage');
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+        }
+        
+        function hideMessages() {
+            document.getElementById('errorMessage').style.display = 'none';
+            document.getElementById('successMessage').style.display = 'none';
+        }
+        
+        function downloadCSV() {
+            if (calculatedPoints.length === 0) return;
+            
+            let csv = 'Point,Angle_Degrees,X_Coordinate,Y_Coordinate\n';
+            calculatedPoints.forEach(point => {
+                csv += `${point.point},${point.angle},${point.x.toFixed(6)},${point.y.toFixed(6)}\n`;
+            });
+            
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'circle_coordinates.csv';
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+        
+        // Auto-calculate on input change
+        document.getElementById('startAngle').addEventListener('input', calculatePoints);
+        document.getElementById('angleIncrement').addEventListener('input', calculatePoints);
+        document.getElementById('radius').addEventListener('input', calculatePoints);
+        
+        // Initial calculation
+        calculatePoints();
+    </script>
+</body>
+</html>
